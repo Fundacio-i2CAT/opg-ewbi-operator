@@ -1,0 +1,32 @@
+{{- if and .Values.rbac.enable .Values.controllerManager.container.enableShimOrchestrator }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "katalis.fullname" (list . "shim-node-reader") }}
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "katalis.fullname" (list . "shim-node-reader") }}
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "katalis.fullname" (list . "shim-node-reader") }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.controllerManager.serviceAccountName }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

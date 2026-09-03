@@ -59,26 +59,36 @@ func (r *ArtefactReconciler) CreateArtefact(ctx context.Context, art *v1beta1.Ar
 			for _, i := range c.Images {
 				imagesIds = append(imagesIds, opgmodels.FileId(i))
 			}
-			components = append(components, opgmodels.ComponentSpec{
-				CommandLineParams: &opgmodels.CommandLineParams{
-					Command:     c.CommandLineParams.Command,
-					CommandArgs: &c.CommandLineParams.CommandArgs,
-				},
-				// CompEnvParams:          &[]opgmodels.CompEnvParams{},
-				ComponentName: c.ComponentName,
-				ComputeResourceProfile: opgmodels.ComputeResourceInfo{
+			commandLineParams := &opgmodels.CommandLineParams{}
+			if c.CommandLineParams != nil {
+				commandLineParams.Command = c.CommandLineParams.Command
+				commandLineParams.CommandArgs = &c.CommandLineParams.CommandArgs
+			}
+			exposedInterfaces := make([]opgmodels.InterfaceDetails, 0, len(c.ExposedInterfaces))
+			for _, exposedInterface := range c.ExposedInterfaces {
+				exposedInterfaces = append(exposedInterfaces, opgmodels.InterfaceDetails{
+					CommPort:       exposedInterface.Port,
+					CommProtocol:   opgmodels.InterfaceDetailsCommProtocol(exposedInterface.Protocol),
+					InterfaceId:    exposedInterface.InterfaceId,
+					VisibilityType: opgmodels.InterfaceDetailsVisibilityType(exposedInterface.VisibilityType),
+				})
+			}
+			computeResourceProfile := opgmodels.ComputeResourceInfo{}
+			if c.ComputeResourceProfile != nil {
+				computeResourceProfile = opgmodels.ComputeResourceInfo{
 					CpuArchType:    opgmodels.ComputeResourceInfoCpuArchType(c.ComputeResourceProfile.CPUArchType),
 					CpuExclusivity: &c.ComputeResourceProfile.CPUExclusivity,
-					// DiskStorage:    new(int32),
-					// Fpga:           new(int),
-					// Gpu:            &[]opgmodels.GpuInfo{},
-					// Hugepages:      &[]opgmodels.HugePage{},
-					Memory: c.ComputeResourceProfile.Memory,
-					NumCPU: c.ComputeResourceProfile.NumCPU,
-					// Vpu:    new(int),
-				},
+					Memory:         c.ComputeResourceProfile.Memory,
+					NumCPU:         c.ComputeResourceProfile.NumCPU,
+				}
+			}
+			components = append(components, opgmodels.ComponentSpec{
+				CommandLineParams: commandLineParams,
+				// CompEnvParams:          &[]opgmodels.CompEnvParams{},
+				ComponentName:          c.ComponentName,
+				ComputeResourceProfile: computeResourceProfile,
 				// DeploymentConfig:  &opgmodels.DeploymentConfig{},
-				ExposedInterfaces: &[]opgmodels.InterfaceDetails{},
+				ExposedInterfaces: &exposedInterfaces,
 				Images:            imagesIds,
 				NumOfInstances:    int32(c.NumOfInstances),
 				// PersistentVolumes: &[]opgmodels.PersistentVolumeDetails{},

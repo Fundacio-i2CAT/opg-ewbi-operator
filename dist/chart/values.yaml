@@ -12,6 +12,8 @@ controllerManager:
       - "--metrics-bind-address=:8443"
       - "--health-probe-bind-address=:8081"
     opgInsecureSkipVerify: false
+    # Lab-only Partner OP orchestrator for local application deployment tests.
+    enableShimOrchestrator: false
     resources:
       limits:
         cpu: 500m

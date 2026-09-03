@@ -39,6 +39,9 @@ spec:
             {{- if .Values.controllerManager.container.opgInsecureSkipVerify }}
             - --opg-insecure-skip-verify
              {{- end }}
+            {{- if .Values.controllerManager.container.enableShimOrchestrator }}
+            - --enable-shim-orchestrator
+            {{- end }}
           command:
             - /manager
           image: {{ .Values.controllerManager.container.image.repository }}:{{ .Values.controllerManager.container.image.tag }}

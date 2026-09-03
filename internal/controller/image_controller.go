@@ -165,6 +165,10 @@ func (r *ImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res 
 	// Handle creation/finalizer
 	if controllerutil.AddFinalizer(&image, v1beta1.ImageFinalizer) {
 		log.Info(">>> [Image] Added finalizer to Image.", "name", image.Name, "namespace", image.Namespace)
+		if image.Labels == nil {
+			image.Labels = make(map[string]string)
+		}
+		image.Labels[v1beta1.ResourceIdLabel] = "image-" + uuid.V5(image.Spec.ImageId+image.Spec.FederationContextId)
 		return ctrl.Result{}, nil
 	}
 

@@ -159,6 +159,10 @@ func (r *ApplicationDeploymentReconciler) Reconcile(ctx context.Context, req ctr
 	// Handle creation/finalizer
 	if controllerutil.AddFinalizer(&appDeploy, v1beta1.ApplicationDeploymentFinalizer) {
 		log.Info(">>> [AppDeploy] Added finalizer to ApplicationDeployment.", "name", appDeploy.Name, "namespace", appDeploy.Namespace)
+		if appDeploy.Labels == nil {
+			appDeploy.Labels = make(map[string]string)
+		}
+		appDeploy.Labels[v1beta1.ResourceIdLabel] = "appdeploy-" + uuid.V5(appDeploy.Spec.FederationContextId+appDeploy.Spec.AppId+appDeploy.Spec.AppInstanceId)
 		return ctrl.Result{}, nil
 	}
 

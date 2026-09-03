@@ -67,6 +67,7 @@ func main() {
 	var secureMetrics bool
 	var enableHTTP2 bool
 	var opgInsecureSkipVerify bool
+	var enableShimOrchestrator bool
 	var tlsOpts []func(*tls.Config)
 	var monitoredNamespace string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
@@ -81,6 +82,8 @@ func main() {
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
 	flag.BoolVar(&opgInsecureSkipVerify, "opg-insecure-skip-verify", false,
 		"If set, the CA certificates verification is skipped for OPG Clients requests.")
+	flag.BoolVar(&enableShimOrchestrator, "enable-shim-orchestrator", false,
+		"Deploy host-side ApplicationDeployment resources with the built-in lab orchestrator.")
 	opts := zap.Options{
 		Development: true,
 		EncoderConfigOptions: []zap.EncoderConfigOption{
@@ -259,6 +262,16 @@ func main() {
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, unableToCreateControllerMsg, "controller", "ApplicationDeployment")
 		os.Exit(1)
+	}
+	if enableShimOrchestrator {
+		setupLog.Info("Shim orchestrator enabled")
+		if err = (&controller.ShimOrchestratorReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, unableToCreateControllerMsg, "controller", "ShimOrchestrator")
+			os.Exit(1)
+		}
 	}
 	// +kubebuilder:scaffold:builder
 

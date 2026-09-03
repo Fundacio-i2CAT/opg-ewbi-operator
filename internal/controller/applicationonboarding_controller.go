@@ -159,6 +159,10 @@ func (r *ApplicationOnboardingReconciler) Reconcile(ctx context.Context, req ctr
 	// Handle creation/finalizer
 	if controllerutil.AddFinalizer(&appOnboard, v1beta1.ApplicationOnboardingFinalizer) {
 		log.Info(">>> [AppOnboard] Added finalizer to ApplicationOnboarding.", "name", appOnboard.Name, "namespace", appOnboard.Namespace)
+		if appOnboard.Labels == nil {
+			appOnboard.Labels = make(map[string]string)
+		}
+		appOnboard.Labels[v1beta1.ResourceIdLabel] = "apponboard-" + uuid.V5(appOnboard.Spec.AppInfo.AppId+appOnboard.Spec.FederationContextId)
 		return ctrl.Result{}, nil
 	}
 	if appOnboard.Labels == nil {

@@ -75,7 +75,7 @@ CLUSTER_WIDE=true ./hack/build-chart.sh
 
 With `CLUSTER_WIDE=true` the chart is generated with a ClusterRole/ClusterRoleBinding instead of a Role/RoleBinding, and the `CLUSTER_WIDE` (operator) and `CONTROLLER_CLUSTER_WIDE` (API) environment variables are set to `true`. In cluster-wide mode:
 - **K8s** technology: resources are created on the host in the namespace set in `spec.federationData.k8sOptions.namespace`, which no longer needs to be the namespace where the host operator is installed.
-- **REST** technology: when a federation is created, the API creates (or reuses) the namespace `fedrest-<uuid>`, and all the federation's resources are created there.
+- **REST** technology: when a federation is created, the API creates (or reuses) the namespace `fedrest-<id>` (`<id>` is 12 hex characters derived from the federation id and country code), and all the federation's resources are created there.
 
 ## Deploy the federation manager
 Install operator in host namespace, set API nodeport and set CRD to true to also install CRDs NodePorts are exposed in case testing outside of the cluster is needed.

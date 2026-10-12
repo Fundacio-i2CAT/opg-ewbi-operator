@@ -50,7 +50,7 @@ func (c *k8sClient) CreateFederation(ctx context.Context, fed *Federation) (*v1b
 	fedId := uuid.V5(*fed.OrigOPFederationId + *fed.OrigOPCountryCode)
 	namespace := c.namespace
 	if c.clusterWide {
-		namespace = "fedrest-" + fedId
+		namespace = "fedrest-" + uuid.Base36(fedId)[:12]
 		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
 		if err := c.kubernetes.Create(ctx, ns); err != nil && !k8serrors.IsAlreadyExists(err) {
 			return nil, errors.Wrapf(err, "unable to create namespace %s", namespace)

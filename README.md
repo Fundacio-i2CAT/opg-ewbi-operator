@@ -60,6 +60,23 @@ This code is designed to run on both ARM64 and AMD64 platforms, but to enable th
     - Line 1: ```IMG ?= ghcr.io/neonephos-katalis/opg-ewbi-operator-amd:neonephos```
     - Line 2: ```PLATFORM ?= linux/amd64```
 
+### Configuration: namespaced or cluster-wide
+By default the operator is namespaced: it watches only the namespace where it is installed, and the API creates all the resources in that same namespace.
+
+The operator can also run cluster-wide, watching all namespaces. The mode is chosen when the helm chart is built, with the `CLUSTER_WIDE` variable (default `false`):
+
+```bash
+make helm CLUSTER_WIDE=true
+```
+**or**
+```bash
+CLUSTER_WIDE=true ./hack/build-chart.sh
+```
+
+With `CLUSTER_WIDE=true` the chart is generated with a ClusterRole/ClusterRoleBinding instead of a Role/RoleBinding, and the `CLUSTER_WIDE` (operator) and `CONTROLLER_CLUSTER_WIDE` (API) environment variables are set to `true`. In cluster-wide mode:
+- **K8s** technology: resources are created on the host in the namespace set in `spec.federationData.k8sOptions.namespace`, which no longer needs to be the namespace where the host operator is installed.
+- **REST** technology: when a federation is created, the API creates (or reuses) the namespace `fedrest-<uuid>`, and all the federation's resources are created there.
+
 ## Deploy the federation manager
 Install operator in host namespace, set API nodeport and set CRD to true to also install CRDs NodePorts are exposed in case testing outside of the cluster is needed.
 

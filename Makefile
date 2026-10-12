@@ -3,6 +3,7 @@ IMG ?= ghcr.io/neonephos-katalis/opg-ewbi-operator:neonephos
 IMG_DEBUG ?= ghcr.io/neonephos-katalis/opg-ewbi-operator:dev-callback-1.1.3
 IMG_API ?= ghcr.io/neonephos-katalis/opg-ewbi-api:neonephos
 PLATFORM ?= linux/amd64
+CLUSTER_WIDE ?= false
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.31.0
 
@@ -277,6 +278,7 @@ base-chart: manifests ## build the operator's helm chart
 	kubebuilder edit  --plugins=helm/v1-alpha
 # 	fix the namespace in the role.yaml file otherwise it hardcodes the namespace to "foo"
 	sed -i 's/namespace: foo/namespace: {{ .Release.Namespace }}/g' dist/chart/templates/rbac/role.yaml
+	CLUSTER_WIDE=$(CLUSTER_WIDE) bash hack/chart-cluster-wide-support.sh
 	helm lint dist/chart
 
 

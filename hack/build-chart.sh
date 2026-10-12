@@ -474,6 +474,8 @@ appVersion: "0.0.5"
 icon: https://blocklogos.s3.eu-west-1.amazonaws.com/nearbycomputing.png
 EOF
 
+bash hack/chart-cluster-wide-support.sh
+
 helm lint dist/chart
 helm lint dist/chart-crd
 

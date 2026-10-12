@@ -11,12 +11,12 @@ metadata:
   labels:
     app.kubernetes.io/name: opg-ewbi
     app.kubernetes.io/managed-by: kustomize
-  name: resourceconsumptionmonitoring-editor-role
+  name: consumptionmonitoring-editor-role
 rules:
 - apiGroups:
   - opg.ewbi.katalis.com
   resources:
-  - resourceconsumptionmonitorings
+  - consumptionmonitorings
   verbs:
   - create
   - delete
@@ -28,6 +28,6 @@ rules:
 - apiGroups:
   - opg.ewbi.katalis.com
   resources:
-  - resourceconsumptionmonitorings/status
+  - consumptionmonitorings/status
   verbs:
   - get

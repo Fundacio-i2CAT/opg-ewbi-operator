@@ -4,16 +4,16 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.5
-  name: resourceconsumptionmonitorings.opg.ewbi.katalis.com
+  name: consumptionmonitorings.opg.ewbi.katalis.com
 spec:
   group: opg.ewbi.katalis.com
   names:
-    kind: ResourceConsumptionMonitoring
-    listKind: ResourceConsumptionMonitoringList
-    plural: resourceconsumptionmonitorings
+    kind: ConsumptionMonitoring
+    listKind: ConsumptionMonitoringList
+    plural: consumptionmonitorings
     shortNames:
     - rcm
-    singular: resourceconsumptionmonitoring
+    singular: consumptionmonitoring
   scope: Namespaced
   versions:
   - additionalPrinterColumns:

@@ -27,7 +27,7 @@ const (
 	testRcmMonType = "edge_resource"
 )
 
-func TestResourceConsumptionMonitoringReconciler(t *testing.T) {
+func TestConsumptionMonitoringReconciler(t *testing.T) {
 	federK8s := makeTestFederation(testFederationName,
 		withFederationContextId(testFederationContextId),
 		rcmFederationWithTechnology(v1beta1.FederationTechnologyK8s),
@@ -48,7 +48,7 @@ func TestResourceConsumptionMonitoringReconciler(t *testing.T) {
 	type response struct {
 		wantReconcileErr bool
 		wantGetErr       func(err error) bool
-		wantStatusState  v1beta1.ResourceConsumptionMonitoringState
+		wantStatusState  v1beta1.ConsumptionMonitoringState
 		wantFinalizer    bool
 		wantLabel        string
 	}
@@ -69,7 +69,7 @@ func TestResourceConsumptionMonitoringReconciler(t *testing.T) {
 			name:      "New Host RCM is set to Pending and labeled",
 			resources: []client.Object{federK8s, makeTestRcm(v1beta1.FederationRelationHost, rcmWithFinalizer())},
 			resp: response{
-				wantStatusState: v1beta1.ResourceConsumptionMonitoringStatePending,
+				wantStatusState: v1beta1.ConsumptionMonitoringStatePending,
 				wantFinalizer:   true,
 				wantLabel:       wantLabel,
 			},
@@ -78,10 +78,10 @@ func TestResourceConsumptionMonitoringReconciler(t *testing.T) {
 			name: "Existing Host RCM on K8s federation keeps its state",
 			resources: []client.Object{federK8s, makeTestRcm(v1beta1.FederationRelationHost,
 				rcmWithFinalizer(),
-				rcmWithState(v1beta1.ResourceConsumptionMonitoringStateAvailable),
+				rcmWithState(v1beta1.ConsumptionMonitoringStateAvailable),
 			)},
 			resp: response{
-				wantStatusState: v1beta1.ResourceConsumptionMonitoringStateAvailable,
+				wantStatusState: v1beta1.ConsumptionMonitoringStateAvailable,
 				wantFinalizer:   true,
 			},
 		},
@@ -89,7 +89,7 @@ func TestResourceConsumptionMonitoringReconciler(t *testing.T) {
 			name:      "New Guest RCM on REST federation is set to Pending and labeled",
 			resources: []client.Object{federRest, makeTestRcm(v1beta1.FederationRelationGuest, rcmWithFinalizer())},
 			resp: response{
-				wantStatusState: v1beta1.ResourceConsumptionMonitoringStatePending,
+				wantStatusState: v1beta1.ConsumptionMonitoringStatePending,
 				wantFinalizer:   true,
 				wantLabel:       wantLabel,
 			},
@@ -98,17 +98,17 @@ func TestResourceConsumptionMonitoringReconciler(t *testing.T) {
 			name: "Existing Guest RCM on REST federation keeps its state",
 			resources: []client.Object{federRest, makeTestRcm(v1beta1.FederationRelationGuest,
 				rcmWithFinalizer(),
-				rcmWithState(v1beta1.ResourceConsumptionMonitoringStatePending),
+				rcmWithState(v1beta1.ConsumptionMonitoringStatePending),
 			)},
 			resp: response{
-				wantStatusState: v1beta1.ResourceConsumptionMonitoringStatePending,
+				wantStatusState: v1beta1.ConsumptionMonitoringStatePending,
 				wantFinalizer:   true,
 			},
 		},
 		{
 			name: "Deleted Guest RCM on REST federation has its finalizer removed",
 			resources: []client.Object{federRest, makeTestRcm(v1beta1.FederationRelationGuest,
-				rcmWithState(v1beta1.ResourceConsumptionMonitoringStatePending),
+				rcmWithState(v1beta1.ConsumptionMonitoringStatePending),
 				rcmWithDeletedAt(time.Now()),
 			)},
 			resp: response{
@@ -118,7 +118,7 @@ func TestResourceConsumptionMonitoringReconciler(t *testing.T) {
 		{
 			name: "Deleted Host RCM has its finalizer removed",
 			resources: []client.Object{federK8s, makeTestRcm(v1beta1.FederationRelationHost,
-				rcmWithState(v1beta1.ResourceConsumptionMonitoringStatePending),
+				rcmWithState(v1beta1.ConsumptionMonitoringStatePending),
 				rcmWithDeletedAt(time.Now()),
 			)},
 			resp: response{
@@ -130,7 +130,7 @@ func TestResourceConsumptionMonitoringReconciler(t *testing.T) {
 			resources: []client.Object{makeTestRcm(v1beta1.FederationRelationHost, rcmWithFinalizer())},
 			resp: response{
 				wantReconcileErr: true,
-				wantStatusState:  v1beta1.ResourceConsumptionMonitoringStateFailed,
+				wantStatusState:  v1beta1.ConsumptionMonitoringStateFailed,
 				wantFinalizer:    true,
 			},
 		},
@@ -159,7 +159,7 @@ func TestResourceConsumptionMonitoringReconciler(t *testing.T) {
 			}
 			assert.Equal(t, ctrl.Result{}, gotResult)
 
-			var got v1beta1.ResourceConsumptionMonitoring
+			var got v1beta1.ConsumptionMonitoring
 			err = r.Client.Get(ctx, req.NamespacedName, &got)
 			if tt.resp.wantGetErr != nil {
 				assert.True(t, tt.resp.wantGetErr(err))
@@ -167,7 +167,7 @@ func TestResourceConsumptionMonitoringReconciler(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Equal(t, tt.resp.wantStatusState, got.Status.State)
-			assert.Equal(t, tt.resp.wantFinalizer, controllerutil.ContainsFinalizer(&got, v1beta1.ResourceConsumptionMonitoringFinalizer))
+			assert.Equal(t, tt.resp.wantFinalizer, controllerutil.ContainsFinalizer(&got, v1beta1.ConsumptionMonitoringFinalizer))
 			if tt.resp.wantLabel != "" {
 				assert.Equal(t, tt.resp.wantLabel, got.Labels[v1beta1.ResourceIdLabel])
 			}
@@ -187,35 +187,35 @@ func rcmFederationWithState(state v1beta1.FederationState) federationOpt {
 	}
 }
 
-type rcmOpt func(*v1beta1.ResourceConsumptionMonitoring)
+type rcmOpt func(*v1beta1.ConsumptionMonitoring)
 
 func rcmWithFinalizer() rcmOpt {
-	return func(r *v1beta1.ResourceConsumptionMonitoring) {
-		controllerutil.AddFinalizer(r, v1beta1.ResourceConsumptionMonitoringFinalizer)
+	return func(r *v1beta1.ConsumptionMonitoring) {
+		controllerutil.AddFinalizer(r, v1beta1.ConsumptionMonitoringFinalizer)
 	}
 }
 
 func rcmWithDeletedAt(now time.Time) rcmOpt {
-	return func(r *v1beta1.ResourceConsumptionMonitoring) {
+	return func(r *v1beta1.ConsumptionMonitoring) {
 		wrapped := metav1.NewTime(now)
 		r.DeletionTimestamp = &wrapped
-		r.Finalizers = []string{v1beta1.ResourceConsumptionMonitoringFinalizer}
+		r.Finalizers = []string{v1beta1.ConsumptionMonitoringFinalizer}
 	}
 }
 
-func rcmWithState(state v1beta1.ResourceConsumptionMonitoringState) rcmOpt {
-	return func(r *v1beta1.ResourceConsumptionMonitoring) {
+func rcmWithState(state v1beta1.ConsumptionMonitoringState) rcmOpt {
+	return func(r *v1beta1.ConsumptionMonitoring) {
 		r.Status.State = state
 	}
 }
 
-func makeTestRcm(relation v1beta1.FederationRelation, opts ...rcmOpt) *v1beta1.ResourceConsumptionMonitoring {
-	r := &v1beta1.ResourceConsumptionMonitoring{
+func makeTestRcm(relation v1beta1.FederationRelation, opts ...rcmOpt) *v1beta1.ConsumptionMonitoring {
+	r := &v1beta1.ConsumptionMonitoring{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testRcmName,
 			Namespace: testNamespace,
 		},
-		Spec: v1beta1.ResourceConsumptionMonitoringSpec{
+		Spec: v1beta1.ConsumptionMonitoringSpec{
 			RelationType:        string(relation),
 			FederationContextId: testFederationContextId,
 			ZoneId:              testRcmZoneId,
@@ -232,17 +232,17 @@ func makeTestRcmReconciler(
 	client client.Client,
 	sch *runtime.Scheme,
 	opgClients opg.OPGClientsMapInterface,
-) *ResourceConsumptionMonitoringReconciler {
-	return &ResourceConsumptionMonitoringReconciler{
+) *ConsumptionMonitoringReconciler {
+	return &ConsumptionMonitoringReconciler{
 		Client:                 client,
 		Scheme:                 sch,
 		OPGClientsMapInterface: opgClients,
-		K8sClient: &k8s.ResourceConsumptionMonitoringReconciler{
+		K8sClient: &k8s.ConsumptionMonitoringReconciler{
 			Client:                 client,
 			Scheme:                 sch,
 			OPGClientsMapInterface: opgClients,
 		},
-		RestClient: &rest.ResourceConsumptionMonitoringReconciler{
+		RestClient: &rest.ConsumptionMonitoringReconciler{
 			Client:                 client,
 			Scheme:                 sch,
 			OPGClientsMapInterface: opgClients,

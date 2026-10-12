@@ -34,21 +34,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// ResourceConsumptionMonitoringReconciler reconciles a ResourceConsumptionMonitoring object
-type ResourceConsumptionMonitoringReconciler struct {
+// ConsumptionMonitoringReconciler reconciles a ConsumptionMonitoring object
+type ConsumptionMonitoringReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	opg.OPGClientsMapInterface
-	K8sClient  *k8s.ResourceConsumptionMonitoringReconciler
-	RestClient *rest.ResourceConsumptionMonitoringReconciler
+	K8sClient  *k8s.ConsumptionMonitoringReconciler
+	RestClient *rest.ConsumptionMonitoringReconciler
 }
-type ExternalResourceConsumptionMonitoringClient interface {
-	CreateResourceConsumptionMonitoring(ctx context.Context, rcm *v1beta1.ResourceConsumptionMonitoring, fed *v1beta1.Federation) error
-	DeleteResourceConsumptionMonitoring(ctx context.Context, rcm *v1beta1.ResourceConsumptionMonitoring, fed *v1beta1.Federation) error
-	UpdateResourceConsumptionMonitoringStatus(ctx context.Context, rcm *v1beta1.ResourceConsumptionMonitoring, fed *v1beta1.Federation) error //Callback for REST and GET for K8s
+type ExternalConsumptionMonitoringClient interface {
+	CreateConsumptionMonitoring(ctx context.Context, rcm *v1beta1.ConsumptionMonitoring, fed *v1beta1.Federation) error
+	DeleteConsumptionMonitoring(ctx context.Context, rcm *v1beta1.ConsumptionMonitoring, fed *v1beta1.Federation) error
+	UpdateConsumptionMonitoringStatus(ctx context.Context, rcm *v1beta1.ConsumptionMonitoring, fed *v1beta1.Federation) error //Callback for REST and GET for K8s
 }
 
-func (r *ResourceConsumptionMonitoringReconciler) getExternalClient(isRest bool) ExternalResourceConsumptionMonitoringClient {
+func (r *ConsumptionMonitoringReconciler) getExternalClient(isRest bool) ExternalConsumptionMonitoringClient {
 	if isRest {
 		return r.RestClient
 	}
@@ -56,30 +56,30 @@ func (r *ResourceConsumptionMonitoringReconciler) getExternalClient(isRest bool)
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ResourceConsumptionMonitoringReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ConsumptionMonitoringReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1beta1.ResourceConsumptionMonitoring{}).
-		Named("resourceconsumptionmonitoring").
+		For(&v1beta1.ConsumptionMonitoring{}).
+		Named("consumptionmonitoring").
 		WatchesRawSource(
 			source.Channel(
-				k8s.ResourceConsumptionMonitoringRemoteEvents,
+				k8s.ConsumptionMonitoringRemoteEvents,
 				&handler.EnqueueRequestForObject{},
 			),
 		).
 		Complete(r)
 }
 
-// +kubebuilder:rbac:groups=opg.ewbi.katalis.com,resources=resourceconsumptionmonitorings,verbs=*,namespace=foo
-// +kubebuilder:rbac:groups=opg.ewbi.katalis.com,resources=resourceconsumptionmonitorings/status,verbs=get;update;patch,namespace=foo
-// +kubebuilder:rbac:groups=opg.ewbi.katalis.com,resources=resourceconsumptionmonitorings/finalizers,verbs=update,namespace=foo
+// +kubebuilder:rbac:groups=opg.ewbi.katalis.com,resources=consumptionmonitorings,verbs=*,namespace=foo
+// +kubebuilder:rbac:groups=opg.ewbi.katalis.com,resources=consumptionmonitorings/status,verbs=get;update;patch,namespace=foo
+// +kubebuilder:rbac:groups=opg.ewbi.katalis.com,resources=consumptionmonitorings/finalizers,verbs=update,namespace=foo
 
-func (r *ResourceConsumptionMonitoringReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
+func (r *ConsumptionMonitoringReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := ctrl.Log
 	log.Info(">>> [RCM] Starting RECONCILE FUNCTION.", "name", req.Name, "namespace", req.Namespace)
 	defer log.Info(">>> [RCM] End RECONCILE FUNCTION.", "name", req.Name, "namespace", req.Namespace)
 
-	// Getting main ResourceConsumptionMonitoring or requeue
-	var rcm v1beta1.ResourceConsumptionMonitoring
+	// Getting main ConsumptionMonitoring or requeue
+	var rcm v1beta1.ConsumptionMonitoring
 	if err := r.Get(ctx, req.NamespacedName, &rcm); err != nil {
 		if apierrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
@@ -94,7 +94,7 @@ func (r *ResourceConsumptionMonitoringReconciler) Reconcile(ctx context.Context,
 		isDeleting := !rcm.GetDeletionTimestamp().IsZero()
 		if err != nil && !isDeleting {
 			log.Error(err, ">>> [RCM] UNEXPECTED ERROR detected in Reconcile, setting state to Failed before patching", "name", rcm.Name, "namespace", rcm.Namespace)
-			rcm.Status.State = v1beta1.ResourceConsumptionMonitoringStateFailed
+			rcm.Status.State = v1beta1.ConsumptionMonitoringStateFailed
 		}
 
 		// Metadata Patch (Annotations, Labels, Finalizers)
@@ -107,7 +107,7 @@ func (r *ResourceConsumptionMonitoringReconciler) Reconcile(ctx context.Context,
 			// Using Patch instead of Update to avoid overwriting changes made by other controllers
 			if patchErr := r.Patch(ctx, &rcm, client.MergeFrom(originalRcm)); patchErr != nil {
 				if !apierrors.IsNotFound(patchErr) {
-					log.Error(patchErr, ">>> [RCM] UNEXPECTED ERROR during ResourceConsumptionMonitoring Metadata UPDATE.", "name", rcm.Name, "namespace", rcm.Namespace)
+					log.Error(patchErr, ">>> [RCM] UNEXPECTED ERROR during ConsumptionMonitoring Metadata UPDATE.", "name", rcm.Name, "namespace", rcm.Namespace)
 				}
 				if err == nil {
 					err = patchErr
@@ -128,7 +128,7 @@ func (r *ResourceConsumptionMonitoringReconciler) Reconcile(ctx context.Context,
 		// Status Update
 		if patchErr := r.Status().Patch(ctx, &rcm, client.MergeFrom(originalRcm)); patchErr != nil {
 			if !apierrors.IsNotFound(patchErr) {
-				log.Error(patchErr, ">>> [RCM] UNEXPECTED ERROR during ResourceConsumptionMonitoring Status UPDATE.", "name", rcm.Name, "namespace", rcm.Namespace)
+				log.Error(patchErr, ">>> [RCM] UNEXPECTED ERROR during ConsumptionMonitoring Status UPDATE.", "name", rcm.Name, "namespace", rcm.Namespace)
 			}
 			if err == nil {
 				err = patchErr
@@ -145,7 +145,7 @@ func (r *ResourceConsumptionMonitoringReconciler) Reconcile(ctx context.Context,
 	extClient := r.getExternalClient(isRest) // Get the appropriate external client based on the federation technology
 	if err != nil {
 		log.Error(err, ">>> [RCM] Should always have a parent federation.", "name", rcm.Name, "namespace", rcm.Namespace)
-		rcm.Status.State = v1beta1.ResourceConsumptionMonitoringStateFailed
+		rcm.Status.State = v1beta1.ConsumptionMonitoringStateFailed
 		return ctrl.Result{}, err
 	}
 
@@ -154,23 +154,23 @@ func (r *ResourceConsumptionMonitoringReconciler) Reconcile(ctx context.Context,
 		return ctrl.Result{}, nil
 	}
 
-	// Handle deletion of the ResourceConsumptionMonitoring resource
+	// Handle deletion of the ConsumptionMonitoring resource
 	if !rcm.GetDeletionTimestamp().IsZero() {
 		if isGuest {
-			if err := extClient.DeleteResourceConsumptionMonitoring(ctx, &rcm, fed); err != nil {
-				log.Error(err, ">>> [RCM] Error deleting ResourceConsumptionMonitoring.", "name", rcm.Name, "namespace", rcm.Namespace)
+			if err := extClient.DeleteConsumptionMonitoring(ctx, &rcm, fed); err != nil {
+				log.Error(err, ">>> [RCM] Error deleting ConsumptionMonitoring.", "name", rcm.Name, "namespace", rcm.Namespace)
 				return ctrl.Result{}, err
 			}
 		}
-		if controllerutil.RemoveFinalizer(&rcm, v1beta1.ResourceConsumptionMonitoringFinalizer) {
-			log.Info(">>> [RCM] Removed basic finalizer for ResourceConsumptionMonitoring, exiting...", "name", rcm.Name, "namespace", rcm.Namespace)
+		if controllerutil.RemoveFinalizer(&rcm, v1beta1.ConsumptionMonitoringFinalizer) {
+			log.Info(">>> [RCM] Removed basic finalizer for ConsumptionMonitoring, exiting...", "name", rcm.Name, "namespace", rcm.Namespace)
 		}
 		return ctrl.Result{}, nil
 	}
 
 	// Handle creation/finalizer
-	if controllerutil.AddFinalizer(&rcm, v1beta1.ResourceConsumptionMonitoringFinalizer) {
-		log.Info(">>> [RCM] Added finalizer to ResourceConsumptionMonitoring.", "name", rcm.Name, "namespace", rcm.Namespace)
+	if controllerutil.AddFinalizer(&rcm, v1beta1.ConsumptionMonitoringFinalizer) {
+		log.Info(">>> [RCM] Added finalizer to ConsumptionMonitoring.", "name", rcm.Name, "namespace", rcm.Namespace)
 		return ctrl.Result{}, nil
 	}
 
@@ -182,12 +182,12 @@ func (r *ResourceConsumptionMonitoringReconciler) Reconcile(ctx context.Context,
 	if !isGuest {
 		// Host RCM handling
 		if isNewRcm {
-			rcm.Status.State = v1beta1.ResourceConsumptionMonitoringStatePending
+			rcm.Status.State = v1beta1.ConsumptionMonitoringStatePending
 			rcm.Labels[v1beta1.ResourceIdLabel] = "rcm-" + uuid.V5(rcm.ResourceIdKey())
 		} else {
 			// Callback for REST and GET for K8s
 			if isRest {
-				if err := extClient.UpdateResourceConsumptionMonitoringStatus(ctx, &rcm, fed); err != nil {
+				if err := extClient.UpdateConsumptionMonitoringStatus(ctx, &rcm, fed); err != nil {
 					log.Error(err, ">>> [RCM][REST] Error during CALLBACK OPERATION via OPG EWBI API.", "name", rcm.Name, "namespace", rcm.Namespace)
 					return ctrl.Result{}, err
 				}
@@ -199,13 +199,13 @@ func (r *ResourceConsumptionMonitoringReconciler) Reconcile(ctx context.Context,
 	} else {
 		// Guest RCM handling
 		if isNewRcm {
-			rcm.Status.State = v1beta1.ResourceConsumptionMonitoringStatePending
+			rcm.Status.State = v1beta1.ConsumptionMonitoringStatePending
 			rcm.Labels[v1beta1.ResourceIdLabel] = "rcm-" + uuid.V5(rcm.ResourceIdKey())
 			if !isRest && rcm.Spec.ResMonNotifLink != "" {
 				log.Info(">>> [RCM][K8s] ResMonNotifLink is only used by REST federations, ignoring it.", "name", rcm.Name, "namespace", rcm.Namespace)
 			}
-			if err := extClient.CreateResourceConsumptionMonitoring(ctx, &rcm, fed); err != nil {
-				log.Error(err, ">>> [RCM] Error APPLYING/UPDATING SPEC ResourceConsumptionMonitoring.", "name", rcm.Name, "namespace", rcm.Namespace)
+			if err := extClient.CreateConsumptionMonitoring(ctx, &rcm, fed); err != nil {
+				log.Error(err, ">>> [RCM] Error APPLYING/UPDATING SPEC ConsumptionMonitoring.", "name", rcm.Name, "namespace", rcm.Namespace)
 				return ctrl.Result{}, err
 			}
 			log.Info(">>> [RCM] SUCCESSFULLY APPLIED SPEC AND SET INITIAL STATUS.", "name", rcm.Name, "namespace", rcm.Namespace)
@@ -213,8 +213,8 @@ func (r *ResourceConsumptionMonitoringReconciler) Reconcile(ctx context.Context,
 			if isRest {
 				log.Info(">>> [RCM][REST] Received UPDATEs via CALLBACK OPERATION with OPG EWBI API.", "name", rcm.Name, "namespace", rcm.Namespace)
 			} else {
-				if err := extClient.UpdateResourceConsumptionMonitoringStatus(ctx, &rcm, fed); err != nil {
-					log.Error(err, ">>> [RCM][K8s] Error updating ResourceConsumptionMonitoring.", "name", rcm.Name, "namespace", rcm.Namespace)
+				if err := extClient.UpdateConsumptionMonitoringStatus(ctx, &rcm, fed); err != nil {
+					log.Error(err, ">>> [RCM][K8s] Error updating ConsumptionMonitoring.", "name", rcm.Name, "namespace", rcm.Namespace)
 					return ctrl.Result{}, err
 				}
 			}

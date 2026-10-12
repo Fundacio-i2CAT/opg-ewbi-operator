@@ -28,22 +28,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// ResourceConsumptionMonitoringReconciler reconciles a ResourceConsumptionMonitoring object
-type ResourceConsumptionMonitoringReconciler struct {
+// ConsumptionMonitoringReconciler reconciles a ConsumptionMonitoring object
+type ConsumptionMonitoringReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	opg.OPGClientsMapInterface
 }
 
-// CreateResourceConsumptionMonitoring
-func (r *ResourceConsumptionMonitoringReconciler) CreateResourceConsumptionMonitoring(ctx context.Context, rcm *v1beta1.ResourceConsumptionMonitoring, fed *v1beta1.Federation) error {
-	rcmHost := &v1beta1.ResourceConsumptionMonitoring{
+// CreateConsumptionMonitoring
+func (r *ConsumptionMonitoringReconciler) CreateConsumptionMonitoring(ctx context.Context, rcm *v1beta1.ConsumptionMonitoring, fed *v1beta1.Federation) error {
+	rcmHost := &v1beta1.ConsumptionMonitoring{
 		TypeMeta: rcm.TypeMeta,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "rcm-" + uuid.V5(rcm.ResourceIdKey()),
 			Namespace: fed.Spec.FederationData.K8sOptions.Namespace,
 		},
-		Spec: v1beta1.ResourceConsumptionMonitoringSpec{
+		Spec: v1beta1.ConsumptionMonitoringSpec{
 			RelationType:        string(v1beta1.FederationRelationHost),
 			FederationContextId: fed.Status.FederationContextId,
 			ZoneId:              rcm.Spec.ZoneId,
@@ -58,13 +58,13 @@ func (r *ResourceConsumptionMonitoringReconciler) CreateResourceConsumptionMonit
 		r.Scheme,
 		fed,
 		rcmHost,
-		&v1beta1.ResourceConsumptionMonitoring{},
+		&v1beta1.ConsumptionMonitoring{},
 		rcm.Name,
 		rcm.Namespace,
 		v1beta1.GroupVersion.Group,
 		v1beta1.GroupVersion.Version,
-		v1beta1.PluralResourceConsumptionMonitoring,
-		"resourceconsumptionmonitoring-controller",
+		v1beta1.PluralConsumptionMonitoring,
+		"consumptionmonitoring-controller",
 		"[RCM][K8s]",
 	); err != nil {
 		return err
@@ -72,10 +72,10 @@ func (r *ResourceConsumptionMonitoringReconciler) CreateResourceConsumptionMonit
 	return nil
 }
 
-// UpdateResourceConsumptionMonitoringStatus
-func (r *ResourceConsumptionMonitoringReconciler) UpdateResourceConsumptionMonitoringStatus(ctx context.Context, rcm *v1beta1.ResourceConsumptionMonitoring, fed *v1beta1.Federation) error {
+// UpdateConsumptionMonitoringStatus
+func (r *ConsumptionMonitoringReconciler) UpdateConsumptionMonitoringStatus(ctx context.Context, rcm *v1beta1.ConsumptionMonitoring, fed *v1beta1.Federation) error {
 	log := ctrl.Log
-	rcmHost := &v1beta1.ResourceConsumptionMonitoring{}
+	rcmHost := &v1beta1.ConsumptionMonitoring{}
 	remoteName := "rcm-" + uuid.V5(rcm.ResourceIdKey())
 	if err := GetRemoteResource(
 		ctx,
@@ -98,15 +98,15 @@ func (r *ResourceConsumptionMonitoringReconciler) UpdateResourceConsumptionMonit
 	return nil
 }
 
-// DeleteResourceConsumptionMonitoring
-func (r *ResourceConsumptionMonitoringReconciler) DeleteResourceConsumptionMonitoring(ctx context.Context, rcm *v1beta1.ResourceConsumptionMonitoring, fed *v1beta1.Federation) error {
+// DeleteConsumptionMonitoring
+func (r *ConsumptionMonitoringReconciler) DeleteConsumptionMonitoring(ctx context.Context, rcm *v1beta1.ConsumptionMonitoring, fed *v1beta1.Federation) error {
 	remoteName := "rcm-" + uuid.V5(rcm.ResourceIdKey())
 	return DeleteRemoteResource(
 		ctx,
 		r.Client,
 		r.Scheme,
 		fed,
-		&v1beta1.ResourceConsumptionMonitoring{},
+		&v1beta1.ConsumptionMonitoring{},
 		remoteName,
 		rcm.Name,
 		rcm.Namespace,

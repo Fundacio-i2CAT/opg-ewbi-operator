@@ -20,18 +20,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type ResourceConsumptionMonitoringState string
+type ConsumptionMonitoringState string
 
 const (
-	ResourceConsumptionMonitoringFinalizer = "katalis.com/resourceconsumptionmonitoring.opg.ewbi.finalizer"
+	ConsumptionMonitoringFinalizer = "katalis.com/consumptionmonitoring.opg.ewbi.finalizer"
 
-	ResourceConsumptionMonitoringStatePending      ResourceConsumptionMonitoringState = "PENDING"
-	ResourceConsumptionMonitoringStateAvailable    ResourceConsumptionMonitoringState = "AVAILABLE"
-	ResourceConsumptionMonitoringStateNotAvailable ResourceConsumptionMonitoringState = "NOT_AVAILABLE"
-	ResourceConsumptionMonitoringStateFailed       ResourceConsumptionMonitoringState = "FAILED"
+	ConsumptionMonitoringStatePending      ConsumptionMonitoringState = "PENDING"
+	ConsumptionMonitoringStateAvailable    ConsumptionMonitoringState = "AVAILABLE"
+	ConsumptionMonitoringStateNotAvailable ConsumptionMonitoringState = "NOT_AVAILABLE"
+	ConsumptionMonitoringStateFailed       ConsumptionMonitoringState = "FAILED"
 
-	PluralResourceConsumptionMonitoring = "resourceconsumptionmonitorings"
-	KindResourceConsumptionMonitoring   = "ResourceConsumptionMonitoring"
+	PluralConsumptionMonitoring = "consumptionmonitorings"
+	KindConsumptionMonitoring   = "ConsumptionMonitoring"
 )
 
 type PeriodicityInterval struct {
@@ -265,7 +265,7 @@ type Application struct {
 }
 
 // +kubebuilder:validation:XValidation:rule="self.monType != 'app_resource' || has(self.application)",message="application is required when monType is app_resource"
-type ResourceConsumptionMonitoringSpec struct {
+type ConsumptionMonitoringSpec struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Enum=HOST;GUEST
 	RelationType string `json:"relationType"`
@@ -293,11 +293,11 @@ type ResourceConsumptionMonitoringSpec struct {
 	ResMonNotifLink string `json:"resMonNotifLink,omitempty"`
 }
 
-type ResourceConsumptionMonitoringStatus struct {
+type ConsumptionMonitoringStatus struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Enum=PENDING;AVAILABLE;NOT_AVAILABLE;FAILED
 	// +kubebuilder:default=PENDING
-	State ResourceConsumptionMonitoringState `json:"state"`
+	State ConsumptionMonitoringState `json:"state"`
 
 	// +kubebuilder:validation:Optional
 	EdgeMetrics *[]EdgeResUtilizeMetrics `json:"edgeMetrics,omitempty"`
@@ -327,19 +327,19 @@ type ResourceConsumptionMonitoringStatus struct {
 // +kubebuilder:printcolumn:name="zoneId",type="string",JSONPath=".spec.zoneId"
 // +kubebuilder:printcolumn:name="monType",type="string",JSONPath=".spec.monType"
 // +kubebuilder:printcolumn:name="state",type="string",JSONPath=".status.state"
-type ResourceConsumptionMonitoring struct {
+type ConsumptionMonitoring struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitzero"`
 	// +required
-	Spec ResourceConsumptionMonitoringSpec `json:"spec"`
+	Spec ConsumptionMonitoringSpec `json:"spec"`
 
 	// +optional
-	Status ResourceConsumptionMonitoringStatus `json:"status,omitzero"`
+	Status ConsumptionMonitoringStatus `json:"status,omitzero"`
 }
 
-func (r *ResourceConsumptionMonitoring) ResourceIdKey() string {
+func (r *ConsumptionMonitoring) ResourceIdKey() string {
 	key := r.Spec.FederationContextId + r.Spec.MonType + r.Spec.ZoneId
 	if r.Spec.Application != nil {
 		key += r.Spec.Application.AppInstanceId
@@ -348,12 +348,12 @@ func (r *ResourceConsumptionMonitoring) ResourceIdKey() string {
 }
 
 // +kubebuilder:object:root=true
-type ResourceConsumptionMonitoringList struct {
+type ConsumptionMonitoringList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitzero"`
-	Items           []ResourceConsumptionMonitoring `json:"items"`
+	Items           []ConsumptionMonitoring `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&ResourceConsumptionMonitoring{}, &ResourceConsumptionMonitoringList{})
+	SchemeBuilder.Register(&ConsumptionMonitoring{}, &ConsumptionMonitoringList{})
 }

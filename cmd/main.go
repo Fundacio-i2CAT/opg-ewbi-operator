@@ -298,22 +298,22 @@ func main() {
 		setupLog.Error(err, unableToCreateControllerMsg, "controller", "ApplicationDeployment")
 		os.Exit(1)
 	}
-	if err = (&controller.ResourceConsumptionMonitoringReconciler{
+	if err = (&controller.ConsumptionMonitoringReconciler{
 		Client:                 mgr.GetClient(),
 		Scheme:                 mgr.GetScheme(),
 		OPGClientsMapInterface: opgClients,
-		K8sClient: &k8s.ResourceConsumptionMonitoringReconciler{
+		K8sClient: &k8s.ConsumptionMonitoringReconciler{
 			Client:                 mgr.GetClient(),
 			Scheme:                 mgr.GetScheme(),
 			OPGClientsMapInterface: opgClients,
 		},
-		RestClient: &rest.ResourceConsumptionMonitoringReconciler{
+		RestClient: &rest.ConsumptionMonitoringReconciler{
 			Client:                 mgr.GetClient(),
 			Scheme:                 mgr.GetScheme(),
 			OPGClientsMapInterface: opgClients,
 		},
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, unableToCreateControllerMsg, "controller", "ResourceConsumptionMonitoring")
+		setupLog.Error(err, unableToCreateControllerMsg, "controller", "ConsumptionMonitoring")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

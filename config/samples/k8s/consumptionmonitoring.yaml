@@ -1,11 +1,11 @@
 apiVersion: opg.ewbi.katalis.com/v1beta1
-kind: ResourceConsumptionMonitoring
+kind: ConsumptionMonitoring
 metadata:
   namespace: guest
   labels:
     app.kubernetes.io/name: opg-ewbi
     app.kubernetes.io/managed-by: kustomize
-  name: resourceconsumptionmonitoring-sample
+  name: consumptionmonitoring-sample
 spec:
   relationType: GUEST
   federationContextId: 04348936-d2cd-5fc9-b93b-40d9e64b988b

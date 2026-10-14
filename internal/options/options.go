@@ -7,7 +7,7 @@ import (
 const (
 	namespaceEnvVar        = "NAMESPACE"
 	namespaceEnvVarDefault = "default"
-	clusterWideEnvVar      = "CLUSTER_WIDE"
+	clusterWideEnvVar      = "CONTROLLER_CLUSTER_WIDE"
 )
 
 // GetNamespace returns the namespace from the environment variable NAMESPACE or the default value "default".

@@ -14,7 +14,7 @@ type Camara struct {
 
 type Controller struct {
 	Namespace   string `split_words:"true" required:"true"`
-	ClusterWide bool   `split_words:"true"`
+	ClusterWide bool   `envconfig:"API_CLUSTER_WIDE"`
 }
 
 type Config struct {

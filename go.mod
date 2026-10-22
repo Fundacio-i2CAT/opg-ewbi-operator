@@ -1,6 +1,6 @@
 module github.com/neonephos-katalis/opg-ewbi-operator
 
-go 1.25.0
+go 1.26.10
 
 require (
 	github.com/deepmap/oapi-codegen v1.12.4

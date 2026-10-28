@@ -172,6 +172,85 @@ spec:
         kubernetes.io/metadata.name: {{ .Release.Namespace }}
 EOF
 
+cat > dist/chart/templates/rbac/shim_orchestrator_role.yaml <<'EOF'
+{{- if and .Values.rbac.enable .Values.controllerManager.container.enableShimOrchestrator }}
+# The shim creates each host ApplicationDeployment's Deployment and Service in that
+# resource's namespace, so the grant follows the operator's scope (clusterWide).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{ if .Values.clusterWide }}ClusterRole{{ else }}Role{{ end }}
+metadata:
+  name: opg-ewbi-shim-orchestrator-{{ .Release.Namespace }}
+  {{- if not .Values.clusterWide }}
+  namespace: {{ .Release.Namespace }}
+  {{- end }}
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{ if .Values.clusterWide }}ClusterRoleBinding{{ else }}RoleBinding{{ end }}
+metadata:
+  name: opg-ewbi-shim-orchestrator-{{ .Release.Namespace }}
+  {{- if not .Values.clusterWide }}
+  namespace: {{ .Release.Namespace }}
+  {{- end }}
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: {{ if .Values.clusterWide }}ClusterRole{{ else }}Role{{ end }}
+  name: opg-ewbi-shim-orchestrator-{{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.controllerManager.serviceAccountName }}
+  namespace: {{ .Release.Namespace }}
+---
+# Nodes are cluster-scoped: the shim reads node addresses to publish NodePort access points.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: opg-ewbi-shim-node-reader-{{ .Release.Namespace }}
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: opg-ewbi-shim-node-reader-{{ .Release.Namespace }}
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: opg-ewbi-shim-node-reader-{{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.controllerManager.serviceAccountName }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}
+EOF
+
 cat > dist/chart/Chart.yaml <<'EOF'
 apiVersion: v2
 name: opg-ewbi-operator
@@ -197,6 +276,8 @@ controllerManager:
       - "--metrics-bind-address=:8443"
       - "--health-probe-bind-address=:8081"
     opgInsecureSkipVerify: false
+    # Lab-only Partner OP orchestrator for local application deployment tests.
+    enableShimOrchestrator: false
     resources:
       limits:
         cpu: 500m
@@ -411,6 +492,9 @@ spec:
             {{- if .Values.controllerManager.container.opgInsecureSkipVerify }}
             - --opg-insecure-skip-verify
              {{- end }}
+            {{- if .Values.controllerManager.container.enableShimOrchestrator }}
+            - --enable-shim-orchestrator
+            {{- end }}
           command:
             - /manager
           image: {{ .Values.controllerManager.container.image.repository }}:{{ .Values.controllerManager.container.image.tag }}

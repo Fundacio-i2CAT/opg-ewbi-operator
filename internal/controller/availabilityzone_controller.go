@@ -185,6 +185,10 @@ func (r *ZoneReconciler) Reconcile(
 	// Handle creation/finalizer
 	if controllerutil.AddFinalizer(&zone, v1beta1.AvailabilityZoneFinalizer) {
 		log.Info(">>> [AZ] Added finalizer to AZ", "name", zone.Name, "namespace", zone.Namespace)
+		if zone.Labels == nil {
+			zone.Labels = make(map[string]string)
+		}
+		zone.Labels[v1beta1.ResourceIdLabel] = "zone-" + uuid.V5(zone.Spec.ZoneId+zone.Spec.FederationContextId)
 		return ctrl.Result{}, nil
 	}
 

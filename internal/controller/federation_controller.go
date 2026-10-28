@@ -249,6 +249,7 @@ func (r *FederationReconciler) Reconcile(
 	// Handle creation/finalizer
 	if controllerutil.AddFinalizer(&fed, v1beta1.FederationFinalizer) {
 		log.Info(">>> [Federation] Added finalizer to Federation", "name", fed.Name, "namespace", fed.Namespace)
+		fed.Labels[v1beta1.ResourceIdLabel] = "fed-" + uuid.V5(fed.Spec.FederationData.OrigOPFederationId+fed.Spec.FederationData.OrigOPCountryCode)
 		fed.Annotations[v1beta1.FederationPolicyAnnotation] = "not-set"
 		if isGuest && !isRest {
 			fed.Annotations[v1beta1.FederationWatcherAnnotation] = "not-stopped"

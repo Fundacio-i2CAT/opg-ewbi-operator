@@ -184,6 +184,10 @@ func (r *ArtefactReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 	// Handle creation/finalizer
 	if controllerutil.AddFinalizer(&art, v1beta1.ArtefactFinalizer) {
 		log.Info(">>> [Artefact] Added finalizer to Artefact.", "name", art.Name, "namespace", art.Namespace)
+		if art.Labels == nil {
+			art.Labels = make(map[string]string)
+		}
+		art.Labels[v1beta1.ResourceIdLabel] = "art-" + uuid.V5(art.Spec.ArtefactId+art.Spec.FederationContextId)
 		return ctrl.Result{}, nil
 	}
 

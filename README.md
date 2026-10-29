@@ -71,7 +71,7 @@ make cluster-wide
 
 `make cluster-wide` replaces the Role/RoleBinding with a ClusterRole/ClusterRoleBinding and adds `clusterWide: true` to `dist/chart/values.yaml`, which sets the `CONTROLLER_CLUSTER_WIDE` (operator) and `API_CLUSTER_WIDE` (API) environment variables to `true`. To go back to namespaced, rebuild the chart from a clean `dist` directory. In cluster-wide mode:
 - **K8s** technology: resources are created on the host in the namespace set in `spec.federationData.k8sOptions.namespace`, which no longer needs to be the namespace where the host operator is installed.
-- **REST** technology: when a federation is created, the API creates (or reuses) the namespace `fedrest-<id>` (`<id>` is 12 hex characters derived from the federation id and country code), and all the federation's resources are created there.
+- **REST** technology: when a federation is created, the API creates (or reuses) the namespace `fedrest-<id>` (`<id>` is 12 base36 characters, `0-9a-z`, derived from the federation id and country code), and all the federation's resources are created there.
 
 ## Deploy the federation manager
 Install operator in host namespace, set API nodeport and set CRD to true to also install CRDs NodePorts are exposed in case testing outside of the cluster is needed.
